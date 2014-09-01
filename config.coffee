@@ -4,7 +4,7 @@ exports.config =
 		watched: [ 'app', 'test', 'vendor', 'bower_components' ]
 	conventions:
 		ignored: [
-			( path ) -> /lodash.*\.js/.test( path ) && not (path == 'lodash.compat.js')
+			( path ) -> /lodash.*\.js$/.test( path ) && not /lodash\.compat\.js$/.test( path )
 		]
 		vendor: [
 			/vendor[\\/]/
@@ -17,3 +17,6 @@ exports.config =
 				after: [
 					/^app[\\/]/
 				]
+	modules:
+		wrapper: false
+		definition: false
