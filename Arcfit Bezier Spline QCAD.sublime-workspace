@@ -1,0 +1,271 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"mix",
+				"mixinClass"
+			],
+			[
+				"subse",
+				"subsetModel"
+			],
+			[
+				"frag",
+				"fragment"
+			]
+		]
+	},
+	"buffers":
+	[
+	],
+	"build_system": "",
+	"command_palette":
+	{
+		"height": 71.0,
+		"selected_items":
+		[
+			[
+				"syn coffe",
+				"Set Syntax: CoffeeScript"
+			]
+		],
+		"width": 507.0
+	},
+	"console":
+	{
+		"height": 0.0
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"file_history":
+	[
+		"/Users/joedski/Library/Application Support/Sublime Text 2/Packages/JavaScript/getmodvar-(elearning-core).sublime-snippet",
+		"/Users/joedski/Library/Application Support/Sublime Text 2/Packages/JavaScript/Object-Value-JS.sublime-snippet",
+		"/Users/joedski/Library/Application Support/Sublime Text 2/Packages/JavaScript/getmod-(elearning-core).sublime-snippet",
+		"/Users/joedski/Library/Application Support/Sublime Text 2/Packages/JavaScript/Object-Method.sublime-snippet",
+		"/Users/joedski/Library/Application Support/Sublime Text 2/Packages/JavaScript/function-bind.sublime-snippet",
+		"/Users/joedski/Library/Application Support/Sublime Text 2/Packages/JavaScript/super-method-call-(super).sublime-snippet",
+		"/Users/joedski/Dropbox/Travel/2014/2014-06 Norway/Round Trip - Amsterdam and Oslo",
+		"/Users/joedski/Dropbox/Travel/2014/2014-06 Norway/Public Itinerary - Joseph",
+		"/Users/joedski/Dropbox/Path of Exile/IobhaBais Point Spec",
+		"/Users/joedski/Documents/Work/Solasus/Aurora-Cengage/ELearning CMS/001_ehrlich/trunk/config.coffee",
+		"/Users/joedski/Documents/Work/Solasus/Aurora-Cengage/ELearning CMS/001_ehrlich/branches/00_test_module/src/js/custom/view/activity/translation-answer-popover.hbs",
+		"/Users/joedski/Documents/Work/Solasus/Aurora-Cengage/ELearning CMS/001_ehrlich/trunk/src/js/custom/view/activity/translation-answer-popover.hbs",
+		"/Users/joedski/Documents/Work/Solasus/Aurora-Cengage/ELearning CMS/001_ehrlich/trunk/src/js/custom/view/activity/translation-answer.js",
+		"/Users/joedski/Documents/Work/Solasus/Aurora-Cengage/ELearning CMS/001_ehrlich/branches/00_test_module/src/js/custom/view/activity/translation.js",
+		"/Users/joedski/Documents/Work/Solasus/Aurora-Cengage/ELearning CMS/001_ehrlich/trunk/src/js/custom/view/activity/content.js",
+		"/Users/joedski/Documents/Work/Solasus/Aurora-Cengage/ELearning CMS/001_ehrlich/branches/00_test_module/src/js/custom/view/activity/translation-answer.js",
+		"/Users/joedski/Documents/Work/Solasus/Aurora-Cengage/ELearning CMS/001_ehrlich/branches/00_test_module/src/js/custom/view/activity/document-editing.js",
+		"/Users/joedski/Documents/Work/Solasus/Aurora-Cengage/ELearning CMS/001_ehrlich/trunk/src/js/custom/view/activity/document-editing-answer.hbs",
+		"/Users/joedski/Documents/Work/Solasus/Aurora-Cengage/ELearning CMS/001_ehrlich/trunk/src/js/custom/view/activity/document-editing-answer.js",
+		"/Users/joedski/Documents/Work/Solasus/Aurora-Cengage/ELearning CMS/001_ehrlich/trunk/src/js/custom/view/activity/document-editing.js",
+		"/Users/joedski/Documents/Work/Solasus/Aurora-Cengage/ELearning CMS/001_ehrlich/trunk/src/js/custom/view/activity/spelling-answer.js",
+		"/Users/joedski/Documents/Work/Solasus/Aurora-Cengage/ELearning CMS/001_ehrlich/trunk/src/js/custom/view/activity/translation.js",
+		"/Users/joedski/Documents/Work/Solasus/Aurora-Cengage/ELearning CMS/001_ehrlich/trunk/src/js/custom/view/activity/chalk-talk.js",
+		"/Users/joedski/Documents/Work/Solasus/Aurora-Cengage/ELearning CMS/001_ehrlich/trunk/src/js/custom/view/activity/assessment-question.js",
+		"/Users/joedski/Documents/Work/Solasus/Aurora-Cengage/ELearning CMS/001_ehrlich/trunk/src/js/custom/view/activity/image-labeling.js",
+		"/Users/joedski/Documents/Work/Solasus/Aurora-Cengage/ELearning CMS/001_ehrlich/trunk/preset/content/course.xml",
+		"/Users/joedski/Documents/Work/Solasus/Aurora-Cengage/ELearning CMS/001_ehrlich/trunk/src/js/custom/view/module.js",
+		"/Users/joedski/Documents/Work/Solasus/Aurora-Cengage/ELearning CMS/001_ehrlich/trunk/src/js/custom/util/path.js",
+		"/Users/joedski/Documents/Work/Solasus/Aurora-Cengage/ELearning CMS/001_ehrlich/trunk/src/js/custom/view/mentor-modal.js",
+		"/Users/joedski/Documents/Work/Solasus/Aurora-Cengage/ELearning CMS/001_ehrlich/trunk/preset/index.html",
+		"/Users/joedski/Documents/Work/Solasus/Aurora-Cengage/ELearning CMS/001_ehrlich/branches/01_intro/preset/content/content.xml"
+	],
+	"find":
+	{
+		"height": 0.0
+	},
+	"find_in_files":
+	{
+		"height": 0.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"extend",
+			"properties",
+			"mapAttrs",
+			"helper.getNumber",
+			"DocumentEditing",
+			"DocumentEditingAnswer",
+			"answerTargetViewClass",
+			"createPreviousDropTargets",
+			"fragments[ previousAnswerItem.slotName ]",
+			"slotName",
+			"setInItem",
+			"ChalkTalk"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"sheets":
+			[
+			]
+		},
+		{
+			"sheets":
+			[
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 0.0
+	},
+	"input":
+	{
+		"height": 30.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			],
+			[
+				1,
+				0,
+				2,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			0.5,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"replace":
+	{
+		"height": 0.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+			[
+				"docedansjs",
+				"trunk/src/js/custom/view/activity/document-editing-answer.js"
+			],
+			[
+				"transanshb",
+				"trunk/src/js/custom/view/activity/translation-answer-popover.hbs"
+			],
+			[
+				"transansjs",
+				"trunk/src/js/custom/view/activity/translation-answer.js"
+			],
+			[
+				"trans",
+				"trunk/src/js/custom/view/activity/translation.js"
+			],
+			[
+				"tru/conf",
+				"trunk/config.coffee"
+			],
+			[
+				"tr/doc",
+				"trunk/src/js/custom/view/activity/document-editing.js"
+			],
+			[
+				"contjs",
+				"trunk/src/js/custom/view/activity/content.js"
+			],
+			[
+				"trunk/src/transpop",
+				"trunk/src/js/custom/view/activity/translation-answer-popover.hbs"
+			],
+			[
+				"tru/transe",
+				"trunk/src/js/custom/view/activity/translation-answer.js"
+			],
+			[
+				"00/doced",
+				"branches/00_test_module/src/js/custom/view/activity/document-editing.js"
+			],
+			[
+				"transl",
+				"trunk/src/js/custom/view/activity/translation.js"
+			],
+			[
+				"dea.hb",
+				"trunk/src/js/custom/view/activity/document-editing-answer.hbs"
+			],
+			[
+				"chaljs",
+				"trunk/src/js/custom/view/activity/chalk-talk.js"
+			],
+			[
+				"assess",
+				"trunk/src/js/custom/view/activity/assessment-question.js"
+			],
+			[
+				"path",
+				"trunk/src/js/custom/util/path.js"
+			],
+			[
+				"mentormo",
+				"trunk/src/js/custom/view/mentor-modal.js"
+			],
+			[
+				"view/modu",
+				"trunk/src/js/custom/view/module.js"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 273.0,
+	"status_bar_visible": true
+}
