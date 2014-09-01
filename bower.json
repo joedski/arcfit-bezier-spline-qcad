@@ -2,6 +2,8 @@
   "name": "arcfit-bezier-spline-qcad",
   "version": "0.0.1",
   "main": "public/ArcfitBezierSpline.js",
-  "dependencies": {},
+  "dependencies": {
+    "lodash": "~2.4.1"
+  },
   "overrides": {}
 }
