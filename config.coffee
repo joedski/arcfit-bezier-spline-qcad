@@ -1,22 +1,28 @@
 exports.config =
 	# See http://brunch.io/#documentation for docs.
 	paths:
-		watched: [ 'app', 'test', 'vendor', 'bower_components' ]
+		public: 'public/ArcfitBezierSpline'
+		watched: [ 'app', 'lib', 'test', 'vendor', 'bower_components' ]
 	conventions:
 		ignored: [
-			( path ) -> /lodash.*\.js$/.test( path ) && not /lodash\.compat\.js$/.test( path )
+			( path ) -> /^bower_components[\\/]lodash[\\/]/.test( path ) && not /lodash\.compat\.js$/.test( path )
 		]
 		vendor: [
-			/vendor[\\/]/
-			/bower_components[\\/]/
+			/^vendor[\\/]/
+		]
+		assets: [
+			/^bower_components[\\/]lodash[\\/]dist/
 		]
 	files:
 		javascripts:
-			joinTo: 'ArcfitBezierSpline/ArcfitBezierSpline.js'
+			joinTo:
+				'v.js': /(^|[\\/])v\.[a-zA-Z0-9]+$/
+				'ArcfitBezierSpline.js': /^app[\\/]/
 			order:
 				after: [
 					/^app[\\/]/
 				]
+	# QCAD sections off scripts by itself.
 	modules:
 		wrapper: false
 		definition: false

@@ -4,4 +4,286 @@ ArcfitBezierSpline: Converts Bezier Splines into Polylines composed of arcs and 
 
 include '../Modify.js'
 
+# Include other libs...
+include './lodash.compat.js'
+include './v.js'
+
 class ArcfitBezierSpline extends Modify
+	@init = ( basePath ) ->
+		action = new RGuiAction( qsTr( "Arc-Fit Spline" ), RMainWindowQt.getMainWindow() )
+
+		@pathTo = ( file ) -> [ basePath, file ].join '/'
+
+		action.setRequiresDocument true
+		action.setScriptFile this.pathTo( "ArcfitBezierSpline.js" )
+		# action.setIcon this.pathTo( "ArcfitBezierSpline.svg" )
+		action.setStatusTip qsTr( "Convert a B-Spline repsesenting a multi-piece Bezier curve into a Polyline." )
+		action.setDefaultShortcut new QKeySequence( "x,a" )
+		action.setDefaultCommands [ "arcfitsplinebezier", "arcfitbezier" ]
+		# I should probably determine a proper sort order at some point...
+		action.setSortOrder 4100
+
+		# args: action, interface, addToMenu, addToToolBar, addToCadToolBar, addSeparatorBefore = false
+		# You'll probably want an icon if you want to have addToToolBar=true.
+		EAction.addGuiActionTo action, Modify, true, false, false
+		return
+
+	@getPreferenceCatagory = -> [ qsTr( 'Modify' ), qsTr( 'ArcFitSpline' ) ]
+
+	@defaultOptions =
+		tolerance: 0.1 #units
+
+
+
+	# ##################
+	# Method definitions
+	# ##################
+
+	# A cached object which holds certain environment vars pertinent to the current action.
+	__environment__: null
+
+	environment: ->
+		unless @__environment__?
+			@__environment__ =
+				documentInterface: this.getDocumentInterface()
+				document: this.getDocument()
+				storage: null
+
+		@__environment__
+
+	clearEnvironment: -> @__environment__ = null; this
+
+	options: ( setOptions ) ->
+		unless __options__?
+			@__options__ = _.defaults {}, ArcfitBezierSpline.defaultOptions
+
+		if setOptions?
+			@__options__ = _.extend @__options__, setOptions
+
+		@__options__
+
+	clearOptions: -> @__options__ = null; this
+
+	# ##################
+	# Main Control Flow
+	# These methods hook into QCAD.
+	# ##################
+
+	beginEvent: ->
+		super
+		op = new RMixedOperation()
+		@applyOperation @beginAction op
+		@terminate()
+
+	terminate: ->
+		@applyDebugOperations()
+		@clearEnvironment()
+		@clearOptions()
+		super
+
+	beginAction: ( op ) ->
+		splineList = @getSelectedSplines()
+		polylineList = _( splineList ).map( _.bind( @arcfitSpline, this ) )
+		_( splineList ).each ( splineEntity ) -> op.deleteObject splineEntity
+		_( polylineList ).each( polylineEntity ) -> op.addObject polylineEntity
+		op
+
+	getSelectedSplines: ->
+		environment = @environment()
+		selectedEntities = _( environment.document.querySelectedEntities() ).map ( id, idIndex ) ->
+			environment.document.queryEntity id
+		_( selectedEntities ).filter isSplineEntity
+
+	arcfitSpline: ( splineEntity, index, splineList ) ->
+		newShapes = []
+		# Even though QCAD only uses B-Splines, this seems to be 3 for cubic bezier splines...?
+		degree = splineEntity.getDegree()
+		pointList = splineEntity.getControlPoints()
+		pointCount = pointList.length
+		startIndexList = _.range 0, pointCount - 1, degree
+		splineSegmentPointLists = _( startIndexList ).map ( startIndex, segmentIndex ) ->
+			pointList.slice startIndex, startIndex + degree + 1
+
+		@createPolylineFromShapes _( splineSegmentPointLists ).reduce(
+			( newShapes, splineSegment ) => newShapes.concat @arcfitSplineSegment splineSegment
+			newShapes
+		)
+
+	createPolylineFromShapes: ( shapeList ) ->
+		polylineEntity = new RPolylineEntity( @environment().document, new RPolylineData() )
+
+		return polylineEntity if shapeList.length == 0
+
+		_( shapeList ).each ( shapeData ) ->
+			bulge = switch
+				when isOfType shapeData, RArc then bulge = shapeData.getBulge()
+				else 0
+			polylineEntity.appendVertex shapeData.getStartPoint(), bulge
+
+		polylineEntity.appendVertex _.last( shapeList ).getEndPoint(), 0
+
+		polylineEntity
+
+	arcfitSplineSegment: ( splineSegment ) ->
+		degree = splineSegment.length
+		shapeList
+
+		return @linefitSplineSegment splineSegment if @splineIsLine splineSegment
+		return @biarcfitSplineSegment splineSegment if @splineIsTooDamnSmall splineSegment
+		return @splitAndFitSplineSegment splineSegment if @splineMiddleSegmentIsReversed splineSegment
+		return @splitAndFitSplineSegment splineSegment, @getFirstInflectionPoint splineSegment if @splineHasInflecitonPoint splineSegment
+
+		shapeList = @biarcfitSplineSegment splineSegment
+
+		if @splineIsTooDistant splineSegment, shapeList
+			return @splitAndFitSplineSegment splineSegment
+		else
+			return shapeList
+
+	splitAndFitSplineSegment: ( splineSegment, t = 0.5 ) ->
+		_( @splitSpline splineSegment, t ).chain()
+			.map( _.bind( @arcfitSplineSegment, this ) )
+			.flatten( true )
+			.value()
+
+	splitSpline: ( splineSegment, t = 0.5 ) ->
+		# ...
+		# stub value...
+		[ splineSegment ]
+	
+	# Tests.
+
+	# Currently, all stubs.
+	splineIsLine: ( splineSegment ) -> false
+	splineIsTooDistant: ( splineSegment ) -> false
+	splineMiddleSegmentIsReversed: ( splineSegment ) -> false
+	splineHasInflecitonPoint: ( splineSegment ) -> false
+	splineIsTooDistant: ( splineSegment ) -> false # false here means it only iterates once.
+
+	# => Array<RLine>
+	linefitSplineSegment: ( splineSegment ) ->
+		[ @lineFromStartEnd splineSegment[ 0 ], splineSegment[ 3 ] ]
+
+	lineFromStartEnd: ( start, end ) ->
+		new RLine start, end
+
+	biarcfitSplineSegment: ( splineSegment ) ->
+		p0 = splineSegment[ 0 ]
+		p3 = splineSegment[ 3 ]
+
+		p0p1 = V.normalize( V.subtract( pointList[ 1 ], pointList[ 0 ] ) )
+		p1p0 = V.negate( p0p1 )
+		p1p2 = V.normalize( V.subtract( pointList[ 2 ], pointList[ 1 ] ) )
+		p2p1 = V.negate( p1p2 )
+		p3p2 = V.normalize( V.subtract( pointList[ 2 ], pointList[ 3 ] ) )
+		p0p3 = V.normalize( V.subtract( pointList[ 3 ], pointList[ 0 ] ) )
+		p3p0 = V.negate( p3p0 )
+
+		n1p = V.normalize( V.add( p0p1, p1p2 ) )
+		n2p = V.normalize( V.add( p3p2, p2p1 ) )
+		nt = V.normalize( V.cross( V.cross( p1p2, p1p0 ), p1p2 ) )
+		n0 = V.cross( p0p1, V.cross( p0p3, p0p1 ) )
+		n3 = V.cross( p3p2, V.cross( p3p0, p3p2 ) )
+
+		pc = @linearIntersection( @lineObjectFromStartAndVector( p0, n1p ), @lineObjectFromStartAndVector( p3, n2p ) );
+		c0 = @linearIntersection( @lineObjectFromStartAndVector( p0, n0 ), @lineObjectFromStartAndVector( pc, nt ) );
+		c1 = @linearIntersection( @lineObjectFromStartAndVector( p3, n3 ), @lineObjectFromStartAndVector( pc, nt ) );
+
+		splineDirection = V.cross( p0p3, p0p1 ).getZ()
+
+		splineIsReversed = switch
+			when splineDirection > 0 then true
+			else false
+
+		[
+			@arcFromStartEndCenter p0, pc, c0, isSplineReversed
+			@arcFromStartEndCenter pc, p3, c1, isSplineReversed
+		]
+
+	linearIntersection: ( La, Lb ) ->
+		upVector = new RVector( 0, 0, 1 )
+
+		vab = V.subtract( Lb.point, La.point )
+		nbp = V.cross( Lb.normal, upVector )
+		vatb = V.scale( nbp, V.dot( nbp, vab ) )
+		natb = V.normalize( vatb )
+		vacM = V.magnitude( vatb ) / V.dot( natb, La.normal )
+		vac = V.scale( La.normal, vacM )
+		pc = V.add( La.point, vac )
+
+		return pc;
+
+	lineObjectFromStartAndVector: ( start, vector ) ->
+		point: start
+		normal: vector.normalize()
+
+	arcFromStartEndCenter: ( start, end, center, isReversed ) ->
+		startRelative = V.fromAToB center, start
+		endRelative = V.fromAToB center, end
+
+		radius = V( startRelative ).magnitude()
+		startAngle = startRelative.getAngle()
+		endAngle = endRelative.getAngle()
+
+		new RArc center, radius, startAngle, endAngle, isReversed
+
+# ####################
+# Debug
+# ####################
+
+	debugOp: -> @__debugOp__ = new RMixedOperation() if not @__debugOp__
+
+	applyDebugOperations: ->
+		if @__debugOp__
+			@environment().documentInterface.applyOperation @__debugOp__
+			@__debugOp__ = null
+
+	debugPoint: ( vec, options ) ->
+		options = _.defaults( options || {}, {
+			color: null
+		})
+
+		entity = new RPointEntity(
+			@environment().document
+			new RPointData( vec )
+		)
+
+		if options.color
+			entity.setColor new RColor options.color[ 0 ], options.color[ 1 ], options.color[ 2 ]
+
+		@debugOp().addObject entity
+
+	debugVector: ( start, vec, options ) ->
+		options = _.defaults( options || {}, {
+			color: null
+			magnitude: null
+		})
+
+		if options.magnitude
+			vec = V( vec ).clone()
+			vec.setMagnitude2d( options.magnitude )
+
+		entity = new RLineEntity(
+			@environment().document
+			new RLineData( start, V( start ).add( vec ) )
+		)
+
+		if options.color
+			entity.setColor new RColor options.color[ 0 ], options.color[ 1 ], options.color[ 2 ]
+
+		@debugOp().addObject entity
+
+	debugLineSegment: ( start, end, options ) ->
+		options = _.defaults( options || {}, {
+			color: null
+		})
+
+		entity = new RLineEntity(
+			this.environment.document
+			new RLineData( start, end )
+		)
+
+		if options.color
+			entity.setColor new RColor options.color[ 0 ], options.color[ 1 ], options.color[ 2 ]
+
+		@debugOp.addObject entity
