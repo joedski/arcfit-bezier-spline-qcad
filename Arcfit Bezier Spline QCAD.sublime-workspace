@@ -19,6 +19,17 @@
 	},
 	"buffers":
 	[
+		{
+			"contents": "###\nArcfitBezierSpline: Converts Bezier Splines into Polylines composed of arcs and line segments\n###\n\ninclude '../Modify.js'\n\n# Include other libs...\ninclude './lodash.compat.js'\ninclude './v.js'\n\nclass ArcfitBezierSpline extends Modify\n	@init = ( basePath ) ->\n		action = new RGuiAction( qsTr( \"Arc-Fit Spline\" ), RMainWindowQt.getMainWindow() )\n\n		@pathTo = ( file ) -> [ basePath, file ].join '/'\n\n		action.setRequiresDocument true\n		action.setScriptFile this.pathTo( \"ArcfitBezierSpline.js\" )\n		# action.setIcon this.pathTo( \"ArcfitBezierSpline.svg\" )\n		action.setStatusTip qsTr( \"Convert a B-Spline repsesenting a multi-piece Bezier curve into a Polyline.\" )\n		action.setDefaultShortcut new QKeySequence( \"x,a\" )\n		action.setDefaultCommands [ \"arcfitsplinebezier\", \"arcfitbezier\" ]\n		# I should probably determine a proper sort order at some point...\n		action.setSortOrder 4100\n\n		# args: action, interface, addToMenu, addToToolBar, addToCadToolBar, addSeparatorBefore = false\n		# You'll probably want an icon if you want to have addToToolBar=true.\n		EAction.addGuiActionTo action, Modify, true, false, false\n		return\n\n	@getPreferenceCatagory = -> [ qsTr( 'Modify' ), qsTr( 'ArcFitSpline' ) ]\n\n	@defaultOptions =\n		tolerance: 0.1 #units\n\n\n\n	# ##################\n	# Method definitions\n	# ##################\n\n	# A cached object which holds certain environment vars pertinent to the current action.\n	__environment__: null\n\n	environment: ->\n		unless @__environment__?\n			@__environment__ =\n				documentInterface: this.getDocumentInterface()\n				document: this.getDocument()\n				storage: null\n\n		@__environment__\n\n	clearEnvironment: -> @__environment__ = null; this\n\n	options: ( setOptions ) ->\n		unless __options__?\n			@__options__ = _.defaults {}, ArcfitBezierSpline.defaultOptions\n\n		if setOptions?\n			@__options__ = _.extend @__options__, setOptions\n\n		@__options__\n\n	clearOptions: -> @__options__ = null; this\n\n	# ##################\n	# Main Control Flow\n	# These methods are defined by the QCAD API.\n	# ##################\n\n	beginEvent: ->\n		super\n		op = new RMixedOperation()\n		@applyOperation @beginAction op\n		@terminate()\n\n	terminate: ->\n		@applyDebugOperations()\n		@clearEnvironment()\n		@clearOptions()\n		super\n\n	# ##################\n	# High Level Implementation\n	# ##################\n\n	beginAction: ( op ) ->\n		splineList = @getSelectedSplines()\n		polylineList = _( splineList ).map( _.bind( @arcfitSpline, this ) )\n		_( splineList ).each ( splineEntity ) -> op.deleteObject splineEntity\n		_( polylineList ).each( polylineEntity ) -> op.addObject polylineEntity\n		op\n\n	getSelectedSplines: ->\n		environment = @environment()\n		selectedEntities = _( environment.document.querySelectedEntities() ).map ( id, idIndex ) ->\n			environment.document.queryEntity id\n		_( selectedEntities ).filter isSplineEntity\n\n	arcfitSpline: ( splineEntity, index, splineList ) ->\n		newShapes = []\n		# Even though QCAD only uses B-Splines, this seems to be 3 for cubic bezier splines...?\n		degree = splineEntity.getDegree()\n		pointList = splineEntity.getControlPoints()\n		pointCount = pointList.length\n		startIndexList = _.range 0, pointCount - 1, degree\n		splineSegmentPointLists = _( startIndexList ).map ( startIndex, segmentIndex ) ->\n			pointList.slice startIndex, startIndex + degree + 1\n\n		@createPolylineFromShapes _( splineSegmentPointLists ).reduce(\n			( newShapes, splineSegment ) => newShapes.concat @arcfitSplineSegment splineSegment\n			newShapes\n		)\n\n	createPolylineFromShapes: ( shapeList ) ->\n		polylineEntity = new RPolylineEntity( @environment().document, new RPolylineData() )\n\n		return polylineEntity if shapeList.length == 0\n\n		_( shapeList ).each ( shapeData ) ->\n			bulge = switch\n				when isOfType shapeData, RArc then bulge = shapeData.getBulge()\n				else 0\n			polylineEntity.appendVertex shapeData.getStartPoint(), bulge\n\n		polylineEntity.appendVertex _.last( shapeList ).getEndPoint(), 0\n\n		polylineEntity\n\n	arcfitSplineSegment: ( splineSegment ) ->\n		degree = splineSegment.length\n		shapeList\n\n		return @linefitSplineSegment splineSegment if @splineIsLine splineSegment\n		return @biarcfitSplineSegment splineSegment if @splineIsTooDamnSmall splineSegment\n		return @splitAndFitSplineSegment splineSegment if @splineMiddleSegmentIsReversed splineSegment\n		return @splitAndFitSplineSegment splineSegment, @getFirstInflectionPoint splineSegment if @splineHasInflecitonPoint splineSegment\n\n		shapeList = @biarcfitSplineSegment splineSegment\n\n		if @splineIsTooDistant splineSegment, shapeList\n			return @splitAndFitSplineSegment splineSegment\n		else\n			return shapeList\n\n	splitAndFitSplineSegment: ( splineSegment, t = 0.5 ) ->\n		_( @splitSpline splineSegment, t ).chain()\n			.map( _.bind( @arcfitSplineSegment, this ) )\n			.flatten( true )\n			.value()\n\n	splitSpline: ( splineSegment, t = 0.5 ) ->\n		# ...\n		# stub value...\n		[ splineSegment ]\n	\n	# Tests.\n\n	# Currently, all stubs.\n	splineIsLine: ( splineSegment ) -> false\n	splineIsTooDistant: ( splineSegment ) -> false\n	splineMiddleSegmentIsReversed: ( splineSegment ) -> false\n	splineHasInflecitonPoint: ( splineSegment ) -> false\n	splineIsTooDistant: ( splineSegment ) -> false # false here means it only iterates once.\n	\n\n	# => Array<RLine>\n	linefitSplineSegment: ( splineSegment ) ->\n		[ @lineFromStartEnd splineSegment[ 0 ], splineSegment[ 3 ] ]\n\n	lineFromStartEnd: ( start, end ) ->\n		new RLine start, end\n\n	biarcfitSplineSegment: ( splineSegment ) ->\n		p0 = splineSegment[ 0 ]\n		p3 = splineSegment[ 3 ]\n\n		p0p1 = V.normalize( V.subtract( pointList[ 1 ], pointList[ 0 ] ) )\n		p1p0 = V.negate( p0p1 )\n		p1p2 = V.normalize( V.subtract( pointList[ 2 ], pointList[ 1 ] ) )\n		p2p1 = V.negate( p1p2 )\n		p3p2 = V.normalize( V.subtract( pointList[ 2 ], pointList[ 3 ] ) )\n		p0p3 = V.normalize( V.subtract( pointList[ 3 ], pointList[ 0 ] ) )\n		p3p0 = V.negate( p3p0 )\n\n		n1p = V.normalize( V.add( p0p1, p1p2 ) )\n		n2p = V.normalize( V.add( p3p2, p2p1 ) )\n		nt = V.normalize( V.cross( V.cross( p1p2, p1p0 ), p1p2 ) )\n		n0 = V.cross( p0p1, V.cross( p0p3, p0p1 ) )\n		n3 = V.cross( p3p2, V.cross( p3p0, p3p2 ) )\n\n		pc = @linearIntersection( @lineObjectFromStartAndVector( p0, n1p ), @lineObjectFromStartAndVector( p3, n2p ) );\n		c0 = @linearIntersection( @lineObjectFromStartAndVector( p0, n0 ), @lineObjectFromStartAndVector( pc, nt ) );\n		c1 = @linearIntersection( @lineObjectFromStartAndVector( p3, n3 ), @lineObjectFromStartAndVector( pc, nt ) );\n\n		splineDirection = V.cross( p0p3, p0p1 ).getZ()\n\n		splineIsReversed = switch\n			when splineDirection > 0 then true\n			else false\n\n		[\n			@arcFromStartEndCenter p0, pc, c0, isSplineReversed\n			@arcFromStartEndCenter pc, p3, c1, isSplineReversed\n		]\n\n	linearIntersection: ( La, Lb ) ->\n		upVector = new RVector( 0, 0, 1 )\n\n		vab = V.subtract( Lb.point, La.point )\n		nbp = V.cross( Lb.normal, upVector )\n		vatb = V.scale( nbp, V.dot( nbp, vab ) )\n		natb = V.normalize( vatb )\n		vacM = V.magnitude( vatb ) / V.dot( natb, La.normal )\n		vac = V.scale( La.normal, vacM )\n		pc = V.add( La.point, vac )\n\n		return pc;\n\n	lineObjectFromStartAndVector: ( start, vector ) ->\n		point: start\n		normal: vector.normalize()\n\n	arcFromStartEndCenter: ( start, end, center, isReversed ) ->\n		startRelative = V.fromAToB center, start\n		endRelative = V.fromAToB center, end\n\n		radius = V( startRelative ).magnitude()\n		startAngle = startRelative.getAngle()\n		endAngle = endRelative.getAngle()\n\n		new RArc center, radius, startAngle, endAngle, isReversed\n\n# ####################\n# Debug\n# ####################\n\n	debugOp: -> @__debugOp__ = new RMixedOperation() if not @__debugOp__\n\n	applyDebugOperations: ->\n		if @__debugOp__\n			@environment().documentInterface.applyOperation @__debugOp__\n			@__debugOp__ = null\n\n	debugPoint: ( vec, options ) ->\n		options = _.defaults( options || {}, {\n			color: null\n		})\n\n		entity = new RPointEntity(\n			@environment().document\n			new RPointData( vec )\n		)\n\n		if options.color\n			entity.setColor new RColor options.color[ 0 ], options.color[ 1 ], options.color[ 2 ]\n\n		@debugOp().addObject entity\n\n	debugVector: ( start, vec, options ) ->\n		options = _.defaults( options || {}, {\n			color: null\n			magnitude: null\n		})\n\n		if options.magnitude\n			vec = V( vec ).clone()\n			vec.setMagnitude2d( options.magnitude )\n\n		entity = new RLineEntity(\n			@environment().document\n			new RLineData( start, V( start ).add( vec ) )\n		)\n\n		if options.color\n			entity.setColor new RColor options.color[ 0 ], options.color[ 1 ], options.color[ 2 ]\n\n		@debugOp().addObject entity\n\n	debugLineSegment: ( start, end, options ) ->\n		options = _.defaults( options || {}, {\n			color: null\n		})\n\n		entity = new RLineEntity(\n			this.environment.document\n			new RLineData( start, end )\n		)\n\n		if options.color\n			entity.setColor new RColor options.color[ 0 ], options.color[ 1 ], options.color[ 2 ]\n\n		@debugOp.addObject entity\n",
+			"file": "app/ArcfitBezierSpline.coffee",
+			"file_size": 8731,
+			"file_write_time": 1409796514000000,
+			"settings":
+			{
+				"buffer_size": 8820,
+				"line_ending": "Unix"
+			}
+		}
 	],
 	"build_system": "",
 	"command_palette":
@@ -125,8 +136,166 @@
 	"groups":
 	[
 		{
+			"selected": 0,
 			"sheets":
 			[
+				{
+					"buffer": 0,
+					"file": "app/ArcfitBezierSpline.coffee",
+					"settings":
+					{
+						"buffer_size": 8820,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								5185,
+								5185
+							]
+						],
+						"settings":
+						{
+							"BracketHighlighterBusy": false,
+							"annotations":
+							[
+								"TODO",
+								"README",
+								"FIXME"
+							],
+							"bh_regions":
+							[
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close"
+							],
+							"csslint_options":
+							{
+								"adjoining-classes": "warning",
+								"box-model": true,
+								"box-sizing": "warning",
+								"compatible-vendor-prefixes": "warning",
+								"display-property-grouping": true,
+								"duplicate-background-images": "warning",
+								"duplicate-properties": true,
+								"empty-rules": true,
+								"errors": true,
+								"fallback-colors": "warning",
+								"floats": "warning",
+								"font-faces": "warning",
+								"font-sizes": "warning",
+								"gradients": "warning",
+								"ids": "warning",
+								"import": "warning",
+								"important": "warning",
+								"known-properties": true,
+								"outline-none": "warning",
+								"overqualified-elements": "warning",
+								"qualified-headings": "warning",
+								"regex-selectors": "warning",
+								"rules-count": "warning",
+								"shorthand": "warning",
+								"star-property-hack": "warning",
+								"text-indent": "warning",
+								"underscore-property-hack": "warning",
+								"unique-headings": "warning",
+								"universal-selector": "warning",
+								"vendor-prefix": true,
+								"zero-units": "warning"
+							},
+							"gjslint_ignore":
+							[
+								110.0
+							],
+							"gjslint_options":
+							[
+							],
+							"javascript_linter": "jshint",
+							"jshint_options":
+							{
+								"smarttabs": true
+							},
+							"pep8": true,
+							"pep8_ignore":
+							[
+								"E501"
+							],
+							"perl_linter": "perlcritic",
+							"pyflakes_ignore":
+							[
+							],
+							"pyflakes_ignore_import_*": true,
+							"sublimelinter": false,
+							"sublimelinter_delay": 2.0,
+							"sublimelinter_disable":
+							[
+							],
+							"sublimelinter_executable_map":
+							{
+							},
+							"sublimelinter_fill_outlines": false,
+							"sublimelinter_gutter_marks": true,
+							"sublimelinter_gutter_marks_theme": "simple",
+							"sublimelinter_mark_style": "none",
+							"sublimelinter_notes": false,
+							"sublimelinter_objj_check_ascii": false,
+							"sublimelinter_popup_errors_on_save": false,
+							"sublimelinter_syntax_map":
+							{
+								"jQuery (JavaScript)": "javascript"
+							},
+							"sublimelinter_wrap_find": true,
+							"syntax": "Packages/CoffeeScript/CoffeeScript.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 1766.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				}
 			]
 		},
 		{

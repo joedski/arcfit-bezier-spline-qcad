@@ -66,7 +66,7 @@ class ArcfitBezierSpline extends Modify
 
 	# ##################
 	# Main Control Flow
-	# These methods hook into QCAD.
+	# These methods are defined by the QCAD API.
 	# ##################
 
 	beginEvent: ->
@@ -80,6 +80,10 @@ class ArcfitBezierSpline extends Modify
 		@clearEnvironment()
 		@clearOptions()
 		super
+
+	# ##################
+	# High Level Implementation
+	# ##################
 
 	beginAction: ( op ) ->
 		splineList = @getSelectedSplines()
@@ -146,10 +150,20 @@ class ArcfitBezierSpline extends Modify
 			.flatten( true )
 			.value()
 
+	# Split a spline at t into two splines.
+	# => Array<Array<RVector>>
 	splitSpline: ( splineSegment, t = 0.5 ) ->
-		# ...
-		# stub value...
-		[ splineSegment ]
+		p01 = V.lerp splineSegment[ 0 ], splineSegment[ 1 ], t
+		p12 = V.lerp splineSegment[ 1 ], splineSegment[ 2 ], t
+		p23 = V.lerp splineSegment[ 2 ], splineSegment[ 3 ], t
+		p0112 = V.lerp p01, p12, t
+		p1223 = V.lerp p12, p23, t
+		pc = V.lerp p0112, p1223, t
+
+		[
+			[ splineSegment[ 0 ], p01, p0112, pc ]
+			[ pc, p1223, p23, splineSegment[ 3 ] ]
+		]
 	
 	# Tests.
 
@@ -159,6 +173,10 @@ class ArcfitBezierSpline extends Modify
 	splineMiddleSegmentIsReversed: ( splineSegment ) -> false
 	splineHasInflecitonPoint: ( splineSegment ) -> false
 	splineIsTooDistant: ( splineSegment ) -> false # false here means it only iterates once.
+	
+	# ##################
+	# Low Level Implementation
+	# ##################
 
 	# => Array<RLine>
 	linefitSplineSegment: ( splineSegment ) ->
@@ -238,6 +256,7 @@ class ArcfitBezierSpline extends Modify
 			@environment().documentInterface.applyOperation @__debugOp__
 			@__debugOp__ = null
 
+	# Colors don't seem to work?  I must doing something wrong here.
 	debugPoint: ( vec, options ) ->
 		options = _.defaults( options || {}, {
 			color: null
