@@ -12,9 +12,11 @@
     "test": "brunch test"
   },
   "dependencies": {
+    "after-brunch": "0.0.4",
     "auto-reload-brunch": ">= 1.0 < 1.8",
     "coffee-script-brunch": "^1.8.0",
     "javascript-brunch": ">= 1.0 < 1.8",
+    "ncp": "^0.6.0",
     "uglify-js-brunch": ">= 1.0 < 1.8"
   }
 }

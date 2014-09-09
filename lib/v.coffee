@@ -50,7 +50,7 @@ do ->
 		constructor: ( rvector, chainAll ) ->
 			if this instanceof V
 				@__chain__ = !!chainAll
-				@__wrapped__ = value
+				@__wrapped__ = rvector
 				this
 			else
 				if rvector and (typeof rvector == 'object') and rvector.hasOwnProperty '__wrapped__'
@@ -63,15 +63,16 @@ do ->
 			this
 
 		clone: chainable clone
-		add: chainable add
-		subtract: chainable subtract
-		cross: chainable cross
-		dot: chainable dot
-		negate: chainable negate
-		lerp: chainable lerp
-		normalize: chainable normalize
-		scale: chainable scale
+		add: chainable @add
+		subtract: chainable @subtract
+		cross: chainable @cross
+		dot: chainable @dot
+		negate: chainable @negate
+		lerp: chainable @lerp
+		normalize: chainable @normalize
+		scale: chainable @scale
 		# This doesn't return a wrapped value...
-		magnitude: -> magnitude @__wrapped__
+		# magnitude: -> magnitude @__wrapped__
+		magnitude: do ( consMagnitude = @magnitude ) -> -> consMagnitude @__wrapped__
 
 	root.V = V
