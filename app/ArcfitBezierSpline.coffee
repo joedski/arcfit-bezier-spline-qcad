@@ -2,6 +2,8 @@
 ArcfitBezierSpline: Converts Bezier Splines into Polylines composed of arcs and line segments
 ###
 
+window = window
+
 include '../Modify.js'
 
 # Include other libs...
@@ -9,6 +11,10 @@ include './lodash.compat.js'
 include './v.js'
 
 class ArcfitBezierSpline extends Modify
+	# hax
+	# QCAD's script engine doesn't like CoffeeScript's extend mechanism.
+	@prototype = new Modify
+
 	@init = ( basePath ) ->
 		action = new RGuiAction( qsTr( "Arc-Fit Spline" ), RMainWindowQt.getMainWindow() )
 
@@ -153,6 +159,9 @@ class ArcfitBezierSpline extends Modify
 	# Split a spline at t into two splines.
 	# => Array<Array<RVector>>
 	splitSpline: ( splineSegment, t = 0.5 ) ->
+		# this shares code with getPointOnSpline.
+		# Unfortunately, this requires intermediate points.
+		# Fortunately, bezier splines are just a bunch of lerps.
 		p01 = V.lerp splineSegment[ 0 ], splineSegment[ 1 ], t
 		p12 = V.lerp splineSegment[ 1 ], splineSegment[ 2 ], t
 		p23 = V.lerp splineSegment[ 2 ], splineSegment[ 3 ], t
@@ -169,6 +178,7 @@ class ArcfitBezierSpline extends Modify
 
 	# Currently, all stubs.
 	splineIsLine: ( splineSegment ) -> false
+	splineIsTooDamnSmall: ( splineSegment ) -> false
 	splineIsTooDistant: ( splineSegment ) -> false
 	splineMiddleSegmentIsReversed: ( splineSegment ) -> false
 	splineHasInflecitonPoint: ( splineSegment ) -> false
@@ -177,6 +187,18 @@ class ArcfitBezierSpline extends Modify
 	# ##################
 	# Low Level Implementation
 	# ##################
+
+	getFirstInflectionPoint: ( splineSegment ) ->
+		return @getPointOnSpline splineSegment, 0.5
+
+	getPointOnSpline: ( splineSegment, t ) ->
+		p01 = V.lerp splineSegment[ 0 ], splineSegment[ 1 ], t
+		p12 = V.lerp splineSegment[ 1 ], splineSegment[ 2 ], t
+		p23 = V.lerp splineSegment[ 2 ], splineSegment[ 3 ], t
+		p0112 = V.lerp p01, p12, t
+		p1223 = V.lerp p12, p23, t
+		pc = V.lerp p0112, p1223, t
+		pc
 
 	# => Array<RLine>
 	linefitSplineSegment: ( splineSegment ) ->
@@ -189,12 +211,12 @@ class ArcfitBezierSpline extends Modify
 		p0 = splineSegment[ 0 ]
 		p3 = splineSegment[ 3 ]
 
-		p0p1 = V.normalize( V.subtract( pointList[ 1 ], pointList[ 0 ] ) )
+		p0p1 = V.normalize( V.subtract( splineSegment[ 1 ], splineSegment[ 0 ] ) )
 		p1p0 = V.negate( p0p1 )
-		p1p2 = V.normalize( V.subtract( pointList[ 2 ], pointList[ 1 ] ) )
+		p1p2 = V.normalize( V.subtract( splineSegment[ 2 ], splineSegment[ 1 ] ) )
 		p2p1 = V.negate( p1p2 )
-		p3p2 = V.normalize( V.subtract( pointList[ 2 ], pointList[ 3 ] ) )
-		p0p3 = V.normalize( V.subtract( pointList[ 3 ], pointList[ 0 ] ) )
+		p3p2 = V.normalize( V.subtract( splineSegment[ 2 ], splineSegment[ 3 ] ) )
+		p0p3 = V.normalize( V.subtract( splineSegment[ 3 ], splineSegment[ 0 ] ) )
 		p3p0 = V.negate( p3p0 )
 
 		n1p = V.normalize( V.add( p0p1, p1p2 ) )

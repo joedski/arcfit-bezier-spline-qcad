@@ -1,3 +1,13 @@
+# Point this to your QCAD installation's script directory.
+# For Macs, this is usually /Applications/QCAD.app/Contents/Resources/scripts
+# If you installed it in your user-specific Applications folder, modify the path appropriately.
+qcadScriptDir = "/Applications/QCAD.app/Contents/Resources/scripts"
+
+ncpCall = ( source, destination ) ->
+	"""node -e 'require( "ncp" ).ncp( "#{ source }", "#{ destination }",""" +
+		"""function( error ) { if( error ) {""" +
+		"""return console.log( "Error trying to copy #{ source } to #{ destination }:" ); console.error( error ); } } );'"""
+
 exports.config =
 	# See http://brunch.io/#documentation for docs.
 	paths:
@@ -26,3 +36,11 @@ exports.config =
 	modules:
 		wrapper: false
 		definition: false
+
+	plugins:
+		afterBrunch: [
+			ncpCall( "public/ArcfitBezierSpline", "#{qcadScriptDir}/Modify/ArcfitBezierSpline" )
+		]
+
+		autoReload:
+			enabled: false
