@@ -56,7 +56,7 @@ class ArcfitBezierSpline extends Modify
 				storage: null
 
 			@__environment__.storage = @__environment__.document.getStorage()
-			
+
 		@__environment__
 
 	clearEnvironment: -> @__environment__ = null; this
@@ -181,12 +181,36 @@ class ArcfitBezierSpline extends Modify
 	# Tests.
 
 	# Currently, all stubs.
-	splineIsLine: ( splineSegment ) -> false
+	splineIsLine: ( splineSegment ) ->
+		# TODO: Make sure control points aren't going out past their end points.
+		p3p2 = V.normalize( V.subtract( splineSegment[ 2 ], splineSegment[ 3 ] ) )
+		p0p1 = V.normalize( V.subtract( splineSegment[ 1 ], splineSegment[ 0 ] ) )
+		p0p3 = V.normalize( V.subtract( splineSegment[ 3 ], splineSegment[ 0 ] ) )
+		splineDirection = V.cross( p0p3, p0p1 ).getZ()
+
+		RMath.fuzzyCompare( splineDirection, 0 ) && RMath.fuzzyCompare( V.cross( p0p3, p3p2 ).getZ(), 0 )
+
 	splineIsTooDamnSmall: ( splineSegment ) -> false
-	splineIsTooDistant: ( splineSegment ) -> false
-	splineMiddleSegmentIsReversed: ( splineSegment ) -> false
-	splineHasInflecitonPoint: ( splineSegment ) -> false
-	splineIsTooDistant: ( splineSegment ) -> false # false here means it only iterates once.
+
+	splineIsTooDistant: ( splineSegment ) ->
+		# Intent: Test some points for how distant they are from the arc whose angles they're within.
+		# Process:
+		# Determine number of sample points within spline. (Note, end points are always co-locational.)
+		#   Probably based on size threshold?  OR jsut fixed number?  But at small scales, it won't do...
+		# map points:
+		#   Check which arc it's inside of
+		#   return distance from point to orthogonal projection of point onto arc.
+		# compare max of points' distances to threshold value.
+		false
+
+	splineMiddleSegmentIsReversed: ( splineSegment ) ->
+		# dot middleSegment, chord < 0 => true, else false.
+		false
+
+	splineHasInflecitonPoint: ( splineSegment ) ->
+		# ...?
+		# For now, might be splineMiddleSegmentIsReversed && splineCageIsConcave.
+		false
 	
 	# ##################
 	# Low Level Implementation
