@@ -40,9 +40,11 @@ do ->
 		@lerp = ( a, b, t = 0.5 ) -> V( a ).chain().scale( 1 - t ).add( V( b ).scale( t ) ).value()
 		# These do not return new vectors in the QCAD API, so we have to clone here.
 		@normalize = ( a ) -> V( a ).clone().normalize()
+		# RVector#scale() => RVector, so we don't need to store a temporary variable.
 			# s may be either a float or RVector.
-			# c is optional.
-		@scale = ( a, s, c ) -> V( a ).chain().clone().scale( unwrap( s ), c ).value()
+			# NOTE: In the C++ implementation, RVector#scale() takes an optional 3rd argument.
+			# I guess that's not acceptable here?
+		@scale = ( a, s, c = null ) -> V( a ).clone().scale( unwrap( s ) )
 		# These return non-vector values.
 		@magnitude = ( a ) -> unwrap( a ).getMagnitude()
 

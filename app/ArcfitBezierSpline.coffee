@@ -55,6 +55,8 @@ class ArcfitBezierSpline extends Modify
 				document: this.getDocument()
 				storage: null
 
+			@__environment__.storage = @__environment__.document.getStorage()
+			
 		@__environment__
 
 	clearEnvironment: -> @__environment__ = null; this
@@ -90,12 +92,14 @@ class ArcfitBezierSpline extends Modify
 	# ##################
 	# High Level Implementation
 	# ##################
+	
+	applyOperation: ( op ) -> @environment().documentInterface.applyOperation( op )
 
 	beginAction: ( op ) ->
 		splineList = @getSelectedSplines()
 		polylineList = _( splineList ).map( _.bind( @arcfitSpline, this ) )
 		_( splineList ).each ( splineEntity ) -> op.deleteObject splineEntity
-		_( polylineList ).each( polylineEntity ) -> op.addObject polylineEntity
+		_( polylineList ).each ( polylineEntity ) -> op.addObject polylineEntity
 		op
 
 	getSelectedSplines: ->
@@ -236,8 +240,8 @@ class ArcfitBezierSpline extends Modify
 			else false
 
 		[
-			@arcFromStartEndCenter p0, pc, c0, isSplineReversed
-			@arcFromStartEndCenter pc, p3, c1, isSplineReversed
+			@arcFromStartEndCenter p0, pc, c0, splineIsReversed
+			@arcFromStartEndCenter pc, p3, c1, splineIsReversed
 		]
 
 	linearIntersection: ( La, Lb ) ->
