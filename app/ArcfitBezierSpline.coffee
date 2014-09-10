@@ -16,7 +16,7 @@ class ArcfitBezierSpline extends Modify
 	@prototype = new Modify
 
 	@init = ( basePath ) ->
-		action = new RGuiAction( qsTr( "Arc-Fit Spline" ), RMainWindowQt.getMainWindow() )
+		action = new RGuiAction( qsTr( "Arc-Fit Bezier Spline" ), RMainWindowQt.getMainWindow() )
 
 		@pathTo = ( file ) -> [ basePath, file ].join '/'
 
@@ -217,7 +217,7 @@ class ArcfitBezierSpline extends Modify
 		p2p1 = V.negate( p1p2 )
 		p3p2 = V.normalize( V.subtract( splineSegment[ 2 ], splineSegment[ 3 ] ) )
 		p0p3 = V.normalize( V.subtract( splineSegment[ 3 ], splineSegment[ 0 ] ) )
-		p3p0 = V.negate( p3p0 )
+		p3p0 = V.negate( p0p3 )
 
 		n1p = V.normalize( V.add( p0p1, p1p2 ) )
 		n2p = V.normalize( V.add( p3p2, p2p1 ) )

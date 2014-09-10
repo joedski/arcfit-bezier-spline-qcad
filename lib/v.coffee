@@ -42,7 +42,7 @@ do ->
 		@normalize = ( a ) -> V( a ).clone().normalize()
 			# s may be either a float or RVector.
 			# c is optional.
-		@scale = ( a, s, c ) -> V( a ).clone().scale( unwrap( s ), c )
+		@scale = ( a, s, c ) -> V( a ).chain().clone().scale( unwrap( s ), c ).value()
 		# These return non-vector values.
 		@magnitude = ( a ) -> unwrap( a ).getMagnitude()
 
@@ -54,9 +54,9 @@ do ->
 				this
 			else
 				if rvector and (typeof rvector == 'object') and rvector.hasOwnProperty '__wrapped__'
-					rvector
+					return rvector
 				else
-					new V rvector
+					return new V rvector
 
 		chain: ->
 			@__chain__ = true
