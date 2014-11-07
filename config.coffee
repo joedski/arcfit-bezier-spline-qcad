@@ -16,17 +16,20 @@ exports.config =
 	conventions:
 		ignored: [
 			( path ) -> /^bower_components[\\/]lodash[\\/]/.test( path ) && not /lodash\.compat\.js$/.test( path )
+			( path ) -> /^bower_components[\\/]mathjs[\\/]/.test( path ) && not /math\.js$/.test( path )
 		]
 		vendor: [
 			/^vendor[\\/]/
 		]
 		assets: [
 			/^bower_components[\\/]lodash[\\/]dist/
+			/^bower_components[\\/]mathjs[\\/]dist/
 		]
 	files:
 		javascripts:
 			joinTo:
 				'v.js': /(^|[\\/])v\.[a-zA-Z0-9]+$/
+				'cubicroots.js': /(^|[\\/])cubicroots\.[a-zA-Z0-9]+$/
 				'ArcfitBezierSpline.js': /^app[\\/]/
 			order:
 				after: [

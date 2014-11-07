@@ -8,11 +8,12 @@ include '../Modify.js'
 
 # Include other libs...
 include './lodash.compat.js'
+include './math.js' # lol.
+include './cubicroots.js'
 include './v.js'
 
 class ArcfitBezierSpline extends Modify
-	# hax
-	# QCAD's script engine doesn't like CoffeeScript's extend mechanism.
+	# hax: QCAD's script engine doesn't like CoffeeScript's extend mechanism.
 	@prototype = new Modify
 
 	@init = ( basePath ) ->
