@@ -1,9 +1,9 @@
 arcfit-bezier-spline-qcad
 =========================
 
-A rudimentary script to arcfit bezier splines, written in coffeescript against the QCAD Script API.
+A rudimentary (well, maybe not) script to arcfit bezier splines, written in coffeescript against the QCAD Script API.
 
-Nothing in this is super complex math wise, just a bit of fun with vectors.
+Nothing in this is super complex math wise, just a bit of fun with vectors.  (I lied, the inflection point thingy uses a cubic solver.)
 
 The goal of this project is to write understandable code, not speed-efficient code.  This is why there is a glut of functions everywhere because functional programming f-yeah.
 
@@ -16,9 +16,11 @@ This may crash QCAD's poor lil non-V8 JS engine.  (CoffeeScript's idea of inheri
 
 Ah, it seems QCAD doesn't have a Complex Number class exposed to JS.  Alas!
 
-Currently this generates polyline entities, however it seems certain pieces of software such as Sketchup and EasyCut don't like polylines for whatever reason.  It could also be that Sketchup just doesn't like importing arcs, which is strange but whatever.
+Currently this generates polyline entities, however it seems certain pieces of software such as Sketchup and EasyCut don't like polylines for whatever reason.  It could also be that Sketchup just doesn't like importing arcs, which is strange but whatever.  Unless Sketchup isn't a SCAD editor at all, which it might not be.
 
-I also haven't actually experimented much with how QCAD acts with polylines so, if it turns out to be more convenient to just have already separate shapes than it does to have polylines, then it'll just push out a bunch of shapes.
+I also haven't actually experimented much with how QCAD acts with polylines so, if it turns out to be more convenient to just have already separate shapes than it does to have polylines, then it'll just push out a bunch of shapes.  I'm mainly concerned with trimming and extending.
+
+Also, some things may already be implemented in QCAD's library of miscellaneous maths but I'm too headstrong to look them up and, as much as I try to outsource the actual development of math algorithms, I also enjoy doing the ones I can.
 
 Test Cases
 ----------
