@@ -37,6 +37,7 @@ do ->
 		@cross = ( a, b ) -> RVector.getCrossProduct unwrap( a ), unwrap( b )
 		@dot = ( a, b ) -> RVector.getDotProduct unwrap( a ), unwrap( b )
 		@negate = ( a ) -> unwrap( a ).getNegated()
+		# lerp( a, b, t ) = (1-t)a + (t)b
 		@lerp = ( a, b, t = 0.5 ) -> V( a ).chain().scale( 1 - t ).add( V( b ).scale( t ) ).value()
 		# These do not return new vectors in the QCAD API, so we have to clone here.
 		@normalize = ( a ) -> V( a ).clone().normalize()
@@ -65,6 +66,7 @@ do ->
 			this
 
 		clone: chainable clone
+		value: -> @__wrapped__
 		add: chainable @add
 		subtract: chainable @subtract
 		cross: chainable @cross

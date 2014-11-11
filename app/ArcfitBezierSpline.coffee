@@ -2,6 +2,7 @@
 ArcfitBezierSpline: Converts Bezier Splines into Polylines composed of arcs and line segments
 ###
 
+# Hax.  Keep QCAD happy when Lodash is checking for existence of global window var
 window = window
 
 include '../Modify.js'
@@ -143,45 +144,25 @@ class ArcfitBezierSpline extends Modify
 		degree = splineSegment.length
 		shapeList
 
-		return @linefitSplineSegment splineSegment if @splineIsLine splineSegment
-		return @biarcfitSplineSegment splineSegment if @splineIsTooDamnSmall splineSegment
+		return LineFitter.fitSegment splineSegment if @splineIsLine splineSegment
+		return NaiveBiarcFitter.fitSegment splineSegment if @splineIsTooDamnSmall splineSegment
 		return @splitAndFitSplineSegment splineSegment if @splineMiddleSegmentIsReversed splineSegment
-		return @splitAndFitSplineSegment splineSegment, @getFirstInflectionPoint splineSegment if @splineHasInflecitonPoint splineSegment
+		return @splitAndFitSplineSegment splineSegment, @getFirstInflectionPointTValue splineSegment if @splineHasInflecitonPoint splineSegment
 
-		shapeList = @biarcfitSplineSegment splineSegment
+		shapeList = NaiveBiarcFitter.fitSegment splineSegment
 
 		if @splineIsTooDistant splineSegment, shapeList
 			return @splitAndFitSplineSegment splineSegment
 		else
 			return shapeList
 
-	splitAndFitSplineSegment: ( splineSegment, t = 0.5 ) ->
-		_( @splitSpline splineSegment, t ).chain()
-			.map( _.bind( @arcfitSplineSegment, this ) )
-			.flatten( true )
-			.value()
-
-	# Split a spline at t into two splines.
-	# => Array<Array<RVector>>
-	splitSpline: ( splineSegment, t = 0.5 ) ->
-		# this shares code with getPointOnSpline.
-		# Unfortunately, this requires intermediate points.
-		# Fortunately, bezier splines are just a bunch of lerps.
-		p01 = V.lerp splineSegment[ 0 ], splineSegment[ 1 ], t
-		p12 = V.lerp splineSegment[ 1 ], splineSegment[ 2 ], t
-		p23 = V.lerp splineSegment[ 2 ], splineSegment[ 3 ], t
-		p0112 = V.lerp p01, p12, t
-		p1223 = V.lerp p12, p23, t
-		pc = V.lerp p0112, p1223, t
-
-		[
-			[ splineSegment[ 0 ], p01, p0112, pc ]
-			[ pc, p1223, p23, splineSegment[ 3 ] ]
-		]
+	splitAndFitSplineSegment: ( splineSegment, t ) ->
+		SplineUtils.splitAndFit splineSegment, t, _.bind( @arcfitSplineSegment, this )
 	
+	# ########
 	# Tests.
+	# ########
 
-	# Currently, all stubs.
 	splineIsLine: ( splineSegment ) ->
 		# TODO: Make sure control points aren't going out past their end points.
 		p3p2 = V.normalize( V.subtract( splineSegment[ 2 ], splineSegment[ 3 ] ) )
@@ -197,7 +178,7 @@ class ArcfitBezierSpline extends Modify
 		# Intent: Test some points for how distant they are from the arc whose angles they're within.
 		# Process:
 		# Determine number of sample points within spline. (Note, end points are always co-locational.)
-		#   Probably based on size threshold?  OR jsut fixed number?  But at small scales, it won't do...
+		#   Probably based on size threshold?  OR just fixed number?  But at small scales, fixed number is unnecessary.
 		# map points:
 		#   Check which arc it's inside of
 		#   return distance from point to orthogonal projection of point onto arc.
@@ -206,7 +187,9 @@ class ArcfitBezierSpline extends Modify
 
 	splineMiddleSegmentIsReversed: ( splineSegment ) ->
 		# dot middleSegment, chord < 0 => true, else false.
-		false
+		middleSegment = V.subtract splineSegment[ 2 ], splineSegment[ 1 ]
+		chord = V.subtract splineSegment[ 3 ], splineSegment[ 0 ]
+		return V.dot( middleSegment, chord ) < 0
 
 	splineHasInflecitonPoint: ( splineSegment ) ->
 		# ...?
@@ -217,8 +200,19 @@ class ArcfitBezierSpline extends Modify
 	# Low Level Implementation
 	# ##################
 
+	# Returns a t-value on the spline.
+	getFirstInflectionPointTValue: ( splineSegment ) ->
+		# return @getPointOnSpline splineSegment, 0.5
+		0.5
+
 	getFirstInflectionPoint: ( splineSegment ) ->
-		return @getPointOnSpline splineSegment, 0.5
+		inflectionPointTValue = @getFirstInflectionPointTValue splineSegment
+
+		# We don't care if it's at the end points...
+		if 0 < inflectionPointTValue < 1
+			@getPointOnSpline splineSegment, inflectionPointTValue
+		else
+			null
 
 	getPointOnSpline: ( splineSegment, t ) ->
 		p01 = V.lerp splineSegment[ 0 ], splineSegment[ 1 ], t
@@ -229,72 +223,7 @@ class ArcfitBezierSpline extends Modify
 		pc = V.lerp p0112, p1223, t
 		pc
 
-	# => Array<RLine>
-	linefitSplineSegment: ( splineSegment ) ->
-		[ @lineFromStartEnd splineSegment[ 0 ], splineSegment[ 3 ] ]
 
-	lineFromStartEnd: ( start, end ) ->
-		new RLine start, end
-
-	biarcfitSplineSegment: ( splineSegment ) ->
-		p0 = splineSegment[ 0 ]
-		p3 = splineSegment[ 3 ]
-
-		p0p1 = V.normalize( V.subtract( splineSegment[ 1 ], splineSegment[ 0 ] ) )
-		p1p0 = V.negate( p0p1 )
-		p1p2 = V.normalize( V.subtract( splineSegment[ 2 ], splineSegment[ 1 ] ) )
-		p2p1 = V.negate( p1p2 )
-		p3p2 = V.normalize( V.subtract( splineSegment[ 2 ], splineSegment[ 3 ] ) )
-		p0p3 = V.normalize( V.subtract( splineSegment[ 3 ], splineSegment[ 0 ] ) )
-		p3p0 = V.negate( p0p3 )
-
-		n1p = V.normalize( V.add( p0p1, p1p2 ) )
-		n2p = V.normalize( V.add( p3p2, p2p1 ) )
-		nt = V.normalize( V.cross( V.cross( p1p2, p1p0 ), p1p2 ) )
-		n0 = V.cross( p0p1, V.cross( p0p3, p0p1 ) )
-		n3 = V.cross( p3p2, V.cross( p3p0, p3p2 ) )
-
-		pc = @linearIntersection( @lineObjectFromStartAndVector( p0, n1p ), @lineObjectFromStartAndVector( p3, n2p ) );
-		c0 = @linearIntersection( @lineObjectFromStartAndVector( p0, n0 ), @lineObjectFromStartAndVector( pc, nt ) );
-		c1 = @linearIntersection( @lineObjectFromStartAndVector( p3, n3 ), @lineObjectFromStartAndVector( pc, nt ) );
-
-		splineDirection = V.cross( p0p3, p0p1 ).getZ()
-
-		splineIsReversed = switch
-			when splineDirection > 0 then true
-			else false
-
-		[
-			@arcFromStartEndCenter p0, pc, c0, splineIsReversed
-			@arcFromStartEndCenter pc, p3, c1, splineIsReversed
-		]
-
-	linearIntersection: ( La, Lb ) ->
-		upVector = new RVector( 0, 0, 1 )
-
-		vab = V.subtract( Lb.point, La.point )
-		nbp = V.cross( Lb.normal, upVector )
-		vatb = V.scale( nbp, V.dot( nbp, vab ) )
-		natb = V.normalize( vatb )
-		vacM = V.magnitude( vatb ) / V.dot( natb, La.normal )
-		vac = V.scale( La.normal, vacM )
-		pc = V.add( La.point, vac )
-
-		return pc;
-
-	lineObjectFromStartAndVector: ( start, vector ) ->
-		point: start
-		normal: vector.normalize()
-
-	arcFromStartEndCenter: ( start, end, center, isReversed ) ->
-		startRelative = V.fromAToB center, start
-		endRelative = V.fromAToB center, end
-
-		radius = V( startRelative ).magnitude()
-		startAngle = startRelative.getAngle()
-		endAngle = endRelative.getAngle()
-
-		new RArc center, radius, startAngle, endAngle, isReversed
 
 # ####################
 # Debug

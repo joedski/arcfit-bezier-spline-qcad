@@ -33,7 +33,8 @@ exports.config =
 				'ArcfitBezierSpline.js': /^app[\\/]/
 			order:
 				after: [
-					/^app[\\/]/
+					/^app[\\/]ArcfitBezierSpline\.js$/
+					/^app[\\/]ArcfitBezierSpline\..+\.js$/
 				]
 	# QCAD sections off scripts by itself.
 	modules:
